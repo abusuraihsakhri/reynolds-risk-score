@@ -4,6 +4,7 @@ Command Line Interface for Reynolds Risk Score.
 import argparse
 import csv
 import json
+import os
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
@@ -80,10 +81,16 @@ def main(argv=None):
         return 0
 
     if args.command == "batch":
+        if not os.path.isfile(args.input):
+            print(f"Error: Input file not found: {args.input}", file=sys.stderr)
+            return 1
         with open(args.input, mode="r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             fieldnames = list(reader.fieldnames or [])
             rows = list(reader)
+        if not fieldnames:
+            print("Error: CSV file has no headers", file=sys.stderr)
+            return 1
 
         out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
         out_rows = []
