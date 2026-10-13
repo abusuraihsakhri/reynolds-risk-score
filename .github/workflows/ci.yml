@@ -31,6 +31,10 @@ jobs:
         python -m compileall -q .
         python -m pytest -v
 
+    - name: Build Python distribution
+      run: |
+        python -m pip wheel --no-deps --wheel-dir /tmp/reynolds-wheels .
+
     - name: Validate and test standalone browser application
       run: |
         node --check web/risk.js
