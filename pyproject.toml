@@ -38,8 +38,14 @@ dev = [
 reynolds = "cli:main"
 reynolds-api = "cli:main"
 
+[tool.setuptools]
+py-modules = ["cli", "reynolds", "risk", "enrichment", "simulator"]
+
 [tool.setuptools.packages.find]
-include = ["agents*"]
+include = ["agents*", "web*"]
+
+[tool.setuptools.package-data]
+web = ["*.html", "*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "."]
