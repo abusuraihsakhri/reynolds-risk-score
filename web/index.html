@@ -1,236 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reynolds Risk Score — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Reynolds Risk Score calculator for 10-year cardiovascular risk using the original published equations.">
+  <title>Reynolds Risk Score | 10-Year CVD Risk</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #f4f7fb; color:#152238 }
+    * { box-sizing:border-box }
+    body { margin:0; line-height:1.5 }
+    main { max-width:1040px; margin:0 auto; padding:36px 22px 56px }
+    .eyebrow { font-size:.8rem; font-weight:700; color:#285b91; text-transform:uppercase; letter-spacing:.11em }
+    h1 { font-size:clamp(1.85rem,4vw,2.8rem); margin:.3rem 0 }
+    .intro { color:#495c73; max-width:740px; margin:0 0 22px }
+    .notice { border-left:4px solid #a16a18; background:#fff6e8; padding:13px 17px; margin-bottom:24px; border-radius:0 8px 8px 0; font-size:.95rem }
+    .layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(290px,.9fr); gap:22px; align-items:start }
+    .panel { background:#fff; border:1px solid #dce5ee; border-radius:14px; box-shadow:0 4px 22px #15223809; padding:26px }
+    h2 { font-size:1.2rem; margin:0 0 16px }
+    .fields { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px }
+    .field { min-width:0 }
+    label { display:block; font-weight:600; font-size:.89rem; margin-bottom:6px }
+    input[type=number], select { width:100%; font:inherit; padding:11px; border:1px solid #a8b9cb; border-radius:7px; background:#fff; color:inherit }
+    input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline:3px solid #2b79db; outline-offset:2px }
+    .hint { color:#586c80; font-size:.78rem; margin-top:4px }
+    fieldset { margin:18px 0 12px; border:0; padding:0 }
+    legend { font-weight:700; font-size:.91rem; margin-bottom:8px }
+    .checks { display:grid; gap:12px }
+    .checks label { display:flex; align-items:center; gap:10px; margin:0; font-weight:500 }
+    input[type=checkbox] { width:18px; height:18px; accent-color:#155fb5 }
+    button { width:100%; border:0; border-radius:8px; padding:12px 18px; font:inherit; font-weight:700; cursor:pointer; background:#155fb5; color:white; margin-top:18px }
+    button:hover { background:#104b90 }
+    .result { background:#f0f6fe; border-radius:10px; padding:18px; margin-bottom:18px }
+    .result strong { display:block; font-size:clamp(2.3rem,5vw,3.5rem); color:#0d4b85; line-height:1.2 }
+    .result span { color:#46627f; font-size:.92rem }
+    .result[hidden], .error[hidden], [hidden] { display:none !important }
+    .error { background:#fff0ee; color:#8c251c; padding:12px; border-radius:8px; margin-top:14px }
+    .small { font-size:.86rem; color:#4b5f75 }
+    .small p { margin:0 0 12px }
+    .small a, footer a { color:#0b58a9 }
+    footer { border-top:1px solid #dce5ee; margin-top:28px; padding-top:16px; font-size:.82rem; color:#52647a }
+    @media(max-width:760px) { main{padding:22px 14px} .layout{grid-template-columns:1fr} .panel{padding:20px} }
+    @media(max-width:430px) { .fields{grid-template-columns:1fr} }
+  </style>
+  <script defer src="risk.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-
-    <div class="header">
-        <div class="header-title">
-            <h1>Reynolds Risk Score</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+  <main>
+    <div class="eyebrow">Primary prevention · Original research equations</div>
+    <h1>Reynolds Risk Score</h1>
+    <p class="intro">Estimate 10-year risk of myocardial infarction, ischemic stroke, coronary revascularization, or cardiovascular death using sex-specific Reynolds models.</p>
+    <div class="notice" role="note"><strong>Educational/research use only.</strong> Not independently clinically validated software. Not a diagnostic result or treatment recommendation. Intended for adults without established cardiovascular disease; the male derivation cohort excluded diabetes. Interpretation should follow current local prevention guidance.</div>
+    <div class="layout">
+      <section class="panel" aria-labelledby="form-title">
+        <h2 id="form-title">Risk factors</h2>
+        <form id="risk-form" novalidate>
+          <div class="fields">
+            <div class="field">
+              <label for="sex">Model</label>
+              <select id="sex" name="sex" required>
+                <option value="female">Women (2007)</option>
+                <option value="male">Men (2008)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="age">Age (years)</label>
+              <input id="age" name="age" type="number" value="55" min="45" max="79" step="1" required>
+              <p class="hint" id="age-range">Women: 45 to under 80</p>
+            </div>
+            <div class="field">
+              <label for="systolic_bp">Systolic BP (mmHg)</label>
+              <input id="systolic_bp" type="number" value="125" min="1" step="any" required>
+            </div>
+            <div class="field">
+              <label for="hs_crp">High-sensitivity CRP (mg/L)</label>
+              <input id="hs_crp" type="number" value="2" min="0.001" step="any" required>
+            </div>
+            <div class="field">
+              <label for="total_cholesterol">Total cholesterol (mg/dL)</label>
+              <input id="total_cholesterol" type="number" value="208" min="1" step="any" required>
+            </div>
+            <div class="field">
+              <label for="hdl_cholesterol">HDL cholesterol (mg/dL)</label>
+              <input id="hdl_cholesterol" type="number" value="52" min="1" step="any" required>
+            </div>
+          </div>
+          <fieldset>
+            <legend>Clinical history</legend>
+            <div class="checks">
+              <label><input id="smoker" type="checkbox"> Current smoker</label>
+              <label><input id="parental_mi_before_60" type="checkbox"> Parent had myocardial infarction before age 60</label>
+              <label><input id="diabetes" type="checkbox"> Diabetes (women's model only)</label>
+            </div>
+          </fieldset>
+          <div class="field" id="hba1c-field" hidden>
+            <label for="hba1c">HbA1c (%)</label>
+            <input id="hba1c" type="number" min="0.1" step="any" placeholder="e.g., 7.1">
+          </div>
+          <button type="submit">Calculate 10-year risk</button>
+          <p class="error" id="error" role="alert" hidden></p>
+        </form>
+      </section>
+      <aside class="panel" aria-labelledby="result-title">
+        <h2 id="result-title">Risk estimate</h2>
+        <div class="result" id="result" hidden aria-live="polite">
+          <strong id="risk-value"></strong>
+          <span>Estimated 10-year composite CVD risk</span>
         </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
+        <p id="prompt" class="small">Enter the risk factors and select <strong>Calculate 10-year risk</strong>.</p>
+        <div class="small">
+          <p><strong>Units:</strong> Lipids in mg/dL, hsCRP in mg/L, blood pressure in mmHg. Values are not automatically converted.</p>
+          <p><strong>Limitations:</strong> Derived from historical US cohorts; discrimination and calibration may differ across populations and current practice. hsCRP during acute illness can distort interpretation.</p>
+          <p><strong>Privacy:</strong> All calculations occur within your browser. No clinical inputs are sent to a server, stored, or logged by this page.</p>
+          <p><strong>Primary sources:</strong>
+            <a href="https://doi.org/10.1001/jama.297.6.611" target="_blank" rel="noopener noreferrer">Women (JAMA 2007)</a> ·
+            <a href="https://doi.org/10.1161/CIRCULATIONAHA.108.814251" target="_blank" rel="noopener noreferrer">Men (Circulation 2008)</a>
+          </p>
         </div>
+      </aside>
     </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Reynolds Risk Score Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "reynolds-risk-score",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+    <footer>Open-source educational calculator · <a href="https://github.com/abusuraihsakhri/reynolds-risk-score" target="_blank" rel="noopener noreferrer">Source repository</a> · MIT License</footer>
+  </main>
 </body>
 </html>
