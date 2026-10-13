@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Reynolds Risk Score API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
+    "description": "Reference summary for the FastAPI service. The generated /openapi.json is authoritative. Includes published Reynolds risk equations and legacy demonstration endpoints; not clinically validated.",
     "version": "3.0.0-ENTERPRISE",
     "contact": {
       "name": "Dr. Abu Suraih Sakhri",
@@ -15,7 +15,7 @@
         "summary": "Health and metadata check",
         "responses": {
           "200": {
-            "description": "System optimal"
+            "description": "Service health status"
           }
         }
       }
@@ -25,7 +25,7 @@
         "summary": "Prometheus operational metrics",
         "responses": {
           "200": {
-            "description": "Prometheus text metrics"
+            "description": "JSON operational metrics (not Prometheus text)"
           }
         }
       }
@@ -76,7 +76,7 @@
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
+        "summary": "Deterministic demonstration response (not an external LLM)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -107,6 +107,80 @@
         "responses": {
           "200": {
             "description": "Cryptographic audit trail"
+          }
+        }
+      }
+    },
+    "/api/risk": {
+      "post": {
+        "summary": "Calculate original sex-specific 10-year Reynolds cardiovascular risk",
+        "description": "Research/education only. Female age 45-79 (HbA1c required if diabetic), nondiabetic male age 50-79. Positive numerical inputs; blood pressure mmHg, cholesterol mg/dL, hsCRP mg/L.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sex",
+                  "age",
+                  "systolic_bp",
+                  "total_cholesterol",
+                  "hdl_cholesterol",
+                  "hs_crp",
+                  "smoker",
+                  "parental_mi_before_60"
+                ],
+                "properties": {
+                  "sex": {
+                    "type": "string",
+                    "enum": [
+                      "female",
+                      "male"
+                    ]
+                  },
+                  "age": {
+                    "type": "number"
+                  },
+                  "systolic_bp": {
+                    "type": "number"
+                  },
+                  "total_cholesterol": {
+                    "type": "number"
+                  },
+                  "hdl_cholesterol": {
+                    "type": "number"
+                  },
+                  "hs_crp": {
+                    "type": "number"
+                  },
+                  "smoker": {
+                    "type": "boolean"
+                  },
+                  "parental_mi_before_60": {
+                    "type": "boolean"
+                  },
+                  "diabetes": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "hba1c": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "10-year risk (%) and source model"
+          },
+          "422": {
+            "description": "Invalid or out-of-scope clinical input"
           }
         }
       }

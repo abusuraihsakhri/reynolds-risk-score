@@ -5,9 +5,9 @@ services:
     build: .
     container_name: reynolds-risk-score
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
-      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:-change-me-in-production}
+      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:?Set a secure AUDIT_SECRET_KEY before starting the container}
       - MODEL_PROVIDER=mock
     restart: unless-stopped
     healthcheck:

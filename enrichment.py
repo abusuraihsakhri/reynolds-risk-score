@@ -1,6 +1,6 @@
 """
-Enrichment Feature Implementation for reynolds-risk-score.
-Generated based on domain-specific requirements in specifications.
+Legacy demonstration engines for nonclinical threshold exercises.
+These do not perform EHR/FHIR integration or validated patient stratification.
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Tuple

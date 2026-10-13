@@ -9,17 +9,18 @@ import csv
 import sys
 import math
 from typing import Any, Dict, Optional
+from risk import calculate_reynolds_risk
 
 
 def calculate_score(**kwargs):
-    """Generic formula stub: weighted sum of numeric inputs."""
+    """NONCLINICAL legacy demonstration formula; never interpret as Reynolds risk."""
     vals = [float(v) for v in kwargs.values() if isinstance(v, (int, float)) or (isinstance(v, str) and v.replace('.', '', 1).isdigit())]
     if not vals:
         vals = [float(kwargs.get("value", 1))]
     # distinct per-project via slug hash
     h = sum(ord(c) for c in "reynolds-risk-score") % 10
     score = sum(vals) * (0.9 + h * 0.02) + math.log1p(len(vals))
-    return {"score": round(score, 2), "inputs": len(vals)}
+    return {"score": round(score, 2), "inputs": len(vals), "warning": "Demonstration-only number; NOT Reynolds cardiovascular risk."}
 
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
@@ -119,12 +120,46 @@ def calculate_apri_fib4(ast_u_l, alt_u_l=None, platelets_109=None, age_years=Non
     }
 
 
+def _csv_flag(value):
+    """Parse strict boolean values from CSV or JSON rows."""
+    if type(value) is bool:
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in ("1", "true", "yes"):
+            return True
+        if text in ("0", "false", "no", ""):
+            return False
+    if type(value) is int and value in (0, 1):
+        return bool(value)
+    raise ValueError("Boolean input must be true/false, yes/no, or 1/0")
+
+
 def assess_row(row):
     """Route row to appropriate calculator based on available keys."""
     try:
         if not isinstance(row, dict):
             return {"error": "Input must be a dictionary"}
 
+        # Recognize complete Reynolds rows before unrelated legacy helpers.
+        if any(k in row for k in ("systolic_bp", "hs_crp", "total_cholesterol")):
+            required = ("sex", "age", "systolic_bp", "total_cholesterol",
+                        "hdl_cholesterol", "hs_crp", "smoker", "parental_mi_before_60")
+            missing = [key for key in required if key not in row or row[key] in (None, "")]
+            if missing:
+                raise ValueError("Missing Reynolds risk fields: " + ", ".join(missing))
+            return calculate_reynolds_risk(
+                sex=row["sex"],
+                age=float(row["age"]),
+                systolic_bp=float(row["systolic_bp"]),
+                total_cholesterol=float(row["total_cholesterol"]),
+                hdl_cholesterol=float(row["hdl_cholesterol"]),
+                hs_crp=float(row["hs_crp"]),
+                smoker=_csv_flag(row["smoker"]),
+                parental_mi_before_60=_csv_flag(row["parental_mi_before_60"]),
+                diabetes=_csv_flag(row.get("diabetes", False)),
+                hba1c=(float(row["hba1c"]) if row.get("hba1c") not in (None, "") else None),
+            )
         # MELD-Na: liver disease severity
         if "bilirubin" in row and "creatinine" in row:
             return calculate_meld_na(
@@ -186,11 +221,12 @@ def process_csv(inp, out):
         merged = {**row, **{k: str(v) for k, v in res.items()}}
         results.append(merged)
 
-    # union fieldnames - keep original first
-    all_keys = set()
+    # Preserve predictable output column order across processes.
+    extra = []
     for rr in results:
-        all_keys.update(rr.keys())
-    extra = [k for k in all_keys if k not in fieldnames]
+        for key in rr:
+            if key not in fieldnames and key not in extra:
+                extra.append(key)
 
     with open(out, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames + extra)
