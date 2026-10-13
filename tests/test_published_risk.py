@@ -90,3 +90,23 @@ def test_tampered_hmac_is_detected():
     assert audit.verify_integrity() is True
     audit.logs[0]["timestamp"] = "modified"
     assert audit.verify_integrity() is False
+
+
+def test_legacy_csv_reynolds_routing(tmp_path):
+    from reynolds import assess_row, process_csv
+    row = {"sex": "female", "age": "55", "systolic_bp": "125",
+           "total_cholesterol": "208", "hdl_cholesterol": "52", "hs_crp": "2",
+           "smoker": "false", "parental_mi_before_60": "no"}
+    assert assess_row(row)["risk_10y_percent"] == 1.49
+    assert "error" in assess_row(row | {"smoker": "not sure"})
+    assert "error" in assess_row({"sex": "female", "systolic_bp": "125"})
+    path = tmp_path / "cases.csv"
+    result = tmp_path / "output.csv"
+    import csv
+    with path.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(row))
+        writer.writeheader()
+        writer.writerow(row)
+    processed = process_csv(path, result)
+    assert processed[0]["risk_10y_percent"] == "1.49"
+    assert "risk_10y_percent" in result.read_text()
