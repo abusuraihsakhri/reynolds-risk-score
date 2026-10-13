@@ -1,204 +1,100 @@
 # Reynolds Risk Score
 
-> **Domain:** Cardiovascular Medicine & Hemodynamic Analytics  
-> **Reference Guidelines & Standards:** `AHA/ACC Practice Guidelines & ESC Clinical Standards`
+A research/education implementation of the **original, sex-specific Reynolds Risk Score** equations for estimating 10-year composite cardiovascular event risk. The application accepts blood pressure, cholesterol, high-sensitivity CRP, smoking, and parental history of myocardial infarction before age 60. The women's model additionally accounts for HbA1c when diabetes is present.
 
-<div align="center">
+**Clinical limitation:** This project has not undergone independent clinical software validation. It is not intended for diagnosis, prescribing, or treatment decisions. Refer to current local primary-prevention guidelines.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+## Browser application
 
-</div>
+The `web/` calculator runs entirely in the browser using plain JavaScript, without a backend, external libraries, cookies, or input uploads. It is suitable for GitHub Pages. Its build is defined in `.github/workflows/pages.yml`; public availability requires GitHub Pages to be enabled with **GitHub Actions** as its source. Do not assume a deployment is live until the Pages workflow and URL have been verified.
 
----
+Alternatively, open `web/index.html` locally or serve it over HTTP. Enter the clinical risk factors and select **Calculate 10-year risk**.
 
-## 📖 What It Does
+## Model scope
 
-Reynolds Risk Score calculates 10-year cardiovascular disease (CVD) risk using hsCRP and family history for women and men with reclassification. The system provides multiple clinical calculation modules including MELD-Na, QTc, BMI z-score, HbA1c conversion, and APRI/FIB-4 scores.
+| | Women | Men |
+|---|---|---|
+| Derivation publication | Ridker et al., JAMA 2007 | Ridker et al., Circulation 2008 |
+| Age range supported here | 45–79 years | 50–79 years |
+| Diabetes | HbA1c (%) required when diabetic | **Not supported**; men in the derivation cohort did not have diabetes |
+| Units | SBP: mmHg; cholesterol: mg/dL; hsCRP: mg/L | Same |
 
----
+Both equations are for **primary prevention in people free of known cardiovascular disease**. Outcomes include myocardial infarction, ischemic stroke, coronary revascularization, and cardiovascular death. Risk estimates may not calibrate to contemporary populations and clinical practice. They should not be treated as current guideline-defined ASCVD risk.
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+### Equations
 
-### 🔬 Analytical Functions
+Women:
 
-- **`calculate_score()`** — Generic weighted sum formula for numeric inputs
-- **`calculate_meld_na()`** — MELD-Na score for liver disease severity
-- **`calculate_qtc()`** — QTc interval correction using Bazett's formula
-- **`calculate_bmi_z()`** — BMI z-score for anthropometric assessment
-- **`convert_hba1c()`** — Convert between HbA1c (%) and estimated average glucose (mg/dL)
-- **`calculate_apri_fib4()`** — APRI and FIB-4 scores for liver fibrosis assessment
-- **`assess_row()`** — Routes input data to appropriate calculator based on available keys
-- **`process_csv()`** — Batch process CSV files with clinical data
-
----
-
-## 📐 Mathematical Formulation & Logic
-
-### MELD-Na Score
-```
-MELD = 3.78 × ln(bilirubin) + 11.2 × ln(INR) + 9.57 × ln(creatinine) + 1.32 × (137 - Na) - (0.033 × 6.43 × (137 - Na))
+```text
+B = 0.0799*age + 3.137*ln(SBP) + 0.180*ln(hsCRP)
+    + 1.382*ln(total cholesterol) - 1.172*ln(HDL)
+    + 0.134*HbA1c [if diabetic]
+    + 0.818 [if smoker] + 0.438 [if parental MI before 60]
+10-year risk (%) = 100 * (1 - 0.98634 ^ exp(B - 22.325))
 ```
 
-### QTc (Bazett's Formula)
-```
-QTc = QT / √(RR)
+Men:
+
+```text
+B = 4.385*ln(age) + 2.607*ln(SBP) + 0.963*ln(total cholesterol)
+    - 0.772*ln(HDL) + 0.405 [if smoker]
+    + 0.102*ln(hsCRP) + 0.541 [if parental MI before 60]
+10-year risk (%) = 100 * (1 - 0.8990 ^ exp(B - 33.097))
 ```
 
-### APRI Score
-```
-APRI = (AST / AST_upper_limit) / Platelets × 100
-```
+Sources:
 
-### FIB-4 Score
-```
-FIB-4 = (Age × AST) / (Platelets × √ALT)
-```
+- Ridker PM et al. *JAMA*. 2007;297:611–619. [doi:10.1001/jama.297.6.611](https://doi.org/10.1001/jama.297.6.611)
+- Ridker PM et al. *Circulation*. 2008;118:2243–2251. [doi:10.1161/CIRCULATIONAHA.108.814251](https://doi.org/10.1161/CIRCULATIONAHA.108.814251)
 
----
+## Python CLI and REST API
 
-## 💻 Installation
+Python 3.10+:
 
 ```bash
-# Clone the repository
 git clone https://github.com/abusuraihsakhri/reynolds-risk-score.git
 cd reynolds-risk-score
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -e ".[dev]"
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ```
 
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Single Calculation
-```bash
-# Using JSON input
-python reynolds.py single --json '{"bilirubin": 2.0, "creatinine": 1.2, "inr": 1.5, "sodium": 135}'
-
-# Using named parameters
-python reynolds.py single --bili 2.0 --creat 1.2 --inr 1.5 --na 135
-```
-
-### 2. Batch CSV Processing
-```bash
-python reynolds.py batch --input sample.csv --output results.csv
-```
-
-### 3. Enterprise CLI (with audit trail)
-```bash
-# Run single task evaluation
-python cli.py audit --task-id TASK-001 --primary 28.5 --secondary 14.2
-
-# Batch process CSV records
-python cli.py batch -i sample.csv -o results.csv
-
-# Verify HMAC audit trail integrity
-python cli.py verify-audit
-
-# Launch FastAPI REST server
-python cli.py serve --host 127.0.0.1 --port 8000
-```
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `id` | Parameter / observation metric | Required |
-| `value` | Parameter / observation metric | Required |
-| `qty` | Parameter / observation metric | Required |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
-### Security Configuration
-
-Set the `AUDIT_SECRET_KEY` environment variable for production use:
+Calculate cardiovascular risk:
 
 ```bash
-export AUDIT_SECRET_KEY="your-secure-random-key"
+reynolds risk --sex female --age 55 --sbp 125 --tc 208 --hdl 52 --crp 2
+# {"risk_10y_percent": 1.49, ...}
 ```
 
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+Add `--smoker`, `--parental-mi`, or (women only) `--diabetes --hba1c 7.1` when appropriate. `risk.py` exposes `calculate_reynolds_risk(...)` as a standard-library function. Invalid or out-of-scope inputs raise `ValueError`.
 
 ```bash
-pytest -v
+reynolds serve --host 127.0.0.1 --port 8000
+# Browser page: http://127.0.0.1:8000/
+# POST http://127.0.0.1:8000/api/risk with JSON risk factors
 ```
 
-Execute high-throughput batch simulation benchmarks:
+The pre-existing audit CLI/API remains available (`reynolds audit`, `reynolds verify-audit`, `/api/audit`). These generic operational checks **are not cardiovascular risk assessment**. The unrelated helper functions in `reynolds.py`, including its demonstration-only generic score, are legacy and are not clinically validated. `python reynolds.py batch --input risk.csv --output results.csv` supports Reynolds risk columns with the names defined in `risk.py`.
+
+## Testing and security
 
 ```bash
-python simulator.py --tasks 1000 --concurrency 8
+python -m pytest -v
+node --check web/risk.js
+node --check web/app.js
+node --test web/risk.test.cjs
 ```
 
----
+Automated tests check known formula vectors, invalid data, Python/JavaScript consistency of expected outputs, CLI/API responses, CSV processing, and audit-log HMAC tampering. No Python runtime, Pyodide, server, or API key is required by the browser calculator.
 
-## 🐳 Container Deployment
+The browser calculator processes inputs in memory without network calls or browser storage. The optional FastAPI service receives JSON over HTTP; do not send real patient identifiers to the demonstration audit endpoints. The audit ledger is **in-memory**, not a persistent or regulatory-compliant audit system, and its regex identifier checks are not comprehensive PHI de-identification. For the backend audit functionality, provide a strong `AUDIT_SECRET_KEY` environment variable. Docker Compose requires it explicitly.
+
+## Deployment and licensing
 
 ```bash
-# Build and run with Docker
-docker build -t reynolds-risk-score .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key reynolds-risk-score
-
-# Or use docker-compose
-AUDIT_SECRET_KEY=your-secret-key docker-compose up
+AUDIT_SECRET_KEY='replace-with-a-long-random-secret' docker compose up --build
 ```
 
----
+The container serves the same browser calculator and FastAPI endpoints on port 8000. GitHub Pages can host only the standalone static calculator (not the Python API or the operational audit service).
 
-## 📁 Project Structure
-
-```
-reynolds-risk-score/
-├── agents/                 # Enterprise agent modules
-│   ├── __init__.py
-│   ├── api.py             # FastAPI REST server
-│   ├── base.py            # Security, PHI guard, audit trail
-│   ├── learning.py        # Bayesian calibration engine
-│   ├── llm_factory.py     # LLM provider factory
-│   ├── metrics.py         # Prometheus metrics
-│   ├── models.py          # Pydantic data models
-│   ├── streamer.py        # WebSocket telemetry
-│   ├── supervisor.py      # Supervisor orchestrator
-│   └── workers.py         # Specialized worker agents
-├── tests/                 # Test suite
-│   ├── test_enrichment.py
-│   ├── test_reynolds_core.py
-│   └── test_reynolds_risk_score.py
-├── web/                   # Operations console UI
-│   └── index.html
-├── cli.py                 # Enterprise CLI entry point
-├── reynolds.py            # Core calculation modules
-├── enrichment.py          # Enrichment feature modules
-├── simulator.py           # High-throughput simulator
-├── pyproject.toml         # Project configuration
-├── Dockerfile             # Container build
-├── docker-compose.yml     # Container orchestration
-└── README.md              # This file
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Tested via CI on Python 3.10–3.12; browser code uses standard modern JavaScript without build tooling. MIT License; see [LICENSE](LICENSE).
