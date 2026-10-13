@@ -74,7 +74,7 @@ reynolds serve --host 127.0.0.1 --port 8000
 # POST http://127.0.0.1:8000/api/risk with JSON risk factors
 ```
 
-The pre-existing audit CLI/API remains available (`reynolds audit`, `reynolds verify-audit`, `/api/audit`). These generic operational checks **are not cardiovascular risk assessment**. The unrelated helper functions in `reynolds.py`, including its demonstration-only generic score, are legacy and are not clinically validated. `python reynolds.py batch --input risk.csv --output results.csv` supports Reynolds risk columns with the names defined in `risk.py`.
+The pre-existing audit CLI/API remains available (`reynolds audit`, `reynolds verify-audit`, `/api/audit`). These generic operational checks **are not cardiovascular risk assessment**. The unrelated helper functions in `reynolds.py`, including its demonstration-only generic score, are legacy and are not clinically validated. `python reynolds.py batch --input sample_reynolds.csv --output results.csv` supports Reynolds risk columns with the names defined in `risk.py`.
 
 ## Testing and security
 
