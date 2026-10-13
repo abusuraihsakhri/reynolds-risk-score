@@ -1,0 +1,4 @@
+sex,age,systolic_bp,total_cholesterol,hdl_cholesterol,hs_crp,smoker,parental_mi_before_60,diabetes,hba1c
+female,55,125,208,52,2,false,false,false,
+male,60,130,205,48,2,false,false,false,
+female,65,150,240,42,4,true,true,true,8.2
