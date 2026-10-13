@@ -9,6 +9,7 @@ import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
 from agents.base import AuditLogger
+from risk import calculate_reynolds_risk
 
 supervisor = SystemSupervisor(model_provider="mock")
 
@@ -16,6 +17,19 @@ supervisor = SystemSupervisor(model_provider="mock")
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="reynolds-risk-score", description="Reynolds Risk Score")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Published Reynolds cardiovascular risk calculation
+    p_risk = subparsers.add_parser("risk", help="Calculate 10-year Reynolds CVD risk")
+    p_risk.add_argument("--sex", choices=["female", "male"], required=True)
+    p_risk.add_argument("--age", type=float, required=True)
+    p_risk.add_argument("--sbp", type=float, required=True, help="Systolic BP, mmHg")
+    p_risk.add_argument("--tc", type=float, required=True, help="Total cholesterol, mg/dL")
+    p_risk.add_argument("--hdl", type=float, required=True, help="HDL cholesterol, mg/dL")
+    p_risk.add_argument("--crp", type=float, required=True, help="hsCRP, mg/L")
+    p_risk.add_argument("--smoker", action="store_true")
+    p_risk.add_argument("--parental-mi", action="store_true", help="Parent with MI before 60")
+    p_risk.add_argument("--diabetes", action="store_true", help="Women only")
+    p_risk.add_argument("--hba1c", type=float, help="HbA1c percent, diabetic women only")
 
     # Audit
     p_audit = subparsers.add_parser("audit", help="Run single task evaluation")
@@ -44,6 +58,21 @@ def main(argv=None):
     p_serve.add_argument("--port", type=int, default=8000)
 
     args = parser.parse_args(argv)
+
+    if args.command == "risk":
+        try:
+            output = calculate_reynolds_risk(
+                sex=args.sex, age=args.age, systolic_bp=args.sbp,
+                total_cholesterol=args.tc, hdl_cholesterol=args.hdl,
+                hs_crp=args.crp, smoker=args.smoker,
+                parental_mi_before_60=args.parental_mi,
+                diabetes=args.diabetes, hba1c=args.hba1c,
+            )
+        except ValueError as exc:
+            print(f"Invalid input: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(output, sort_keys=True))
+        return 0
 
     if args.command == "audit":
         payload = SystemTaskPayload(
