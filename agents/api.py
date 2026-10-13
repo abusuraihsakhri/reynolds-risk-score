@@ -15,7 +15,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Reynolds Risk Score API",
-    description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
+    description="Educational Reynolds risk calculator and legacy operational demonstration",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -47,7 +47,7 @@ def api_risk(payload: ReynoldsRiskRequest):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "reynolds-risk-score", "domain": "Clinical & Biomedical AI", "standard": "CAP / CLSI / ISO Standards", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "reynolds-risk-score", "domain": "Clinical & Biomedical AI", "standard": "Demonstration service; not clinically validated", "version": "3.0.0-ENTERPRISE"}
 
 
 @app.get("/metrics")
